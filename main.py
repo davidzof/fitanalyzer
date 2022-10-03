@@ -35,6 +35,11 @@ def analyze_data():
 
         if df is not None:
             plot_hr(df)
+    if value == "Zones":
+        df = configuration.getFitData()
+
+        if df is not None:
+            plot_zones(df)
     if value == "Heart Rate + Power":
         df = configuration.getFitData()
         if df is not None:
