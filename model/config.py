@@ -31,12 +31,16 @@ class Configuration(Singleton):
         config.read('properties.ini')
         print(config['DEFAULT']['MinHR'])
         # config['DEFAULT']['MaxHR'] = '188'
+        self.zones = eval(config['HEARTRATE_ZONES']['zones'])
         with open('properties.ini', 'w') as configfile:
             config.write(configfile)
 
     def setFileName(self, filename):
         self.filename = filename
         self.name_changed = True
+
+    def getZones(self):
+        return self.zones
 
     def getFileName(self):
         return self.filename

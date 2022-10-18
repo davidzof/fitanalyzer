@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from model.config import Configuration
+
+configuration = Configuration()
+
 """
 Charts to do:
 1. HR + Ave HR with Zones
@@ -71,9 +75,11 @@ def plot_hr(df):
     ax.plot(df['timestamp'], df['avehr'], color="orange", dashes=[1, 0, 1])
     ax.legend()
 
-    # Zones
-    plt.hlines(162, 0, last, color='red', linestyle='dashed', label='LT2')
-    plt.hlines(148, 0, last, color='green', linestyle='dashed', label='LT1')
+    # Zones Gridlines
+    zones = configuration.getZones()
+    for zone in zones:
+        if zone[0] is not None:
+            plt.hlines(zone[0], 0, last, color=zone[2], linestyle='dashed', label=zone[1])
     plt.legend(loc='upper right')
     plt.grid()
     plt.show()
@@ -105,6 +111,8 @@ def plot_hrpwr(df):
 
 def plot_zones(df):
     """
+    Draws a graph of time spent in zones against elapsed time. Gives a vision of intervals and zones. Note only
+    zones longer than 2 minutes (120s) get annotated with a timestamp
 
     Parameters
     ----------
@@ -114,32 +122,35 @@ def plot_zones(df):
     -------
 
     """
-    zones = [148, 162]  # three zones < 148, 148-162 and > 162
+    zones = configuration.getZones()
 
     avehr = df['avehr']
     last_zone = 0
     start = 0
     i = 0
-    zz = []
-    tstamp = []
+    zone_values = []
+    zone_time_stamps = []
     annotations = []
     while i < len(avehr):
+        # Loop over all rolling average heart rate entries
         hr = avehr[i]
         ts = df['timestamp'][i]
-        zone = 1
-        for zone_hr in zones:
-            if hr < zone_hr:
+        current_zone = 1
+        for zone in zones:
+            # calculate the current_zone based on the heart rate
+            if zone[0] is None or hr < zone[0]:
                 break
-            zone += 1
+            current_zone += 1
 
-        if zone != last_zone:
-            # change in zone
+        if current_zone != last_zone:
+            # the zone has changed
             if ts != 0:
-                # not the initial change, record the end of the last zone
-                zz.append(last_zone)
-                tstamp.append(ts - 1)
+                # This is not the first change. Save the last zone end time (current time less 1 second)
+                zone_values.append(int(last_zone))
+                zone_time_stamps.append(ts - 1)
                 print("zone {} ts {}".format(last_zone, ts - 1))
-                if last_zone > 1:
+                if last_zone > 0:
+                    # annotate zones longer than 2 minutes with a timestamp
                     zlen = ts - start
 
                     if zlen >= 120:
@@ -149,27 +160,39 @@ def plot_zones(df):
                         annotations.append((ts-(zlen/2), t, last_zone))
                 start = ts
 
-            zz.append(zone)
-            tstamp.append(ts)
+            print("zone {} ts {}".format(current_zone, ts))
+            zone_values.append(int(current_zone))
+            zone_time_stamps.append(ts)
 
-            last_zone = zone
-            print("zone {} ts {}".format(zone, ts))
+            last_zone = current_zone
 
         i = i + 1
 
-    # https://stackoverflow.com/questions/69100231/matplotlib-fill-area-with-different-colors-based-on-a-value
+    """
+    Plot zone values with different shadings for each zone
+    see: https://stackoverflow.com/questions/69100231/matplotlib-fill-area-with-different-colors-based-on-a-value
+    """
     f, ax = plt.subplots(1)
-    z2 = [2] * len(tstamp)
-    z1 = [1] * len(tstamp)
-    ax.plot(tstamp, zz, color='none')
-    polygon = plt.fill_between(tstamp, zz, color='red', alpha=0.3)
-    line = np.array(zz)
-    zz2 = np.array(z2)
-    zz1 = np.array(z1)
-    ax.fill_between(tstamp, zz, where=line > zz1,
-                    facecolor='red', alpha=0.5, interpolate=True)
-    ax.fill_between(tstamp, zz, where=line > zz2,
-                    facecolor='red', alpha=0.7, interpolate=True)
+
+    # plot the background zone chart
+    ax.plot(zone_time_stamps, zone_values, color='none')
+    plt.fill_between(zone_time_stamps, zone_values, color='red', alpha=(1/len(zones)))
+    line = np.array(zone_values)
+
+    ### TODO fix this we just need to loop over zones len, not zones
+    zone_count = 1
+    for zone in zones:
+        """
+        For each zone create an np_array filled with the zone value equal to the length of the graph then plot it
+        with darker shading
+        """
+        zone_graph = [zone_count] * len(zone_time_stamps)
+        zone_graph_np = np.array(zone_graph)
+        alpha = ((zone_count)/len(zones))
+        ax.fill_between(zone_time_stamps, zone_values, where=line > zone_graph_np,
+                        facecolor='red', alpha=((zone_count)/len(zones)), interpolate=True)
+        zone_count = zone_count + 1
+
 
     ax.set_ylim(bottom=0)
     plt.legend()
@@ -179,8 +202,8 @@ def plot_zones(df):
 
     for annotate in annotations:
         print(annotate)
-        ax.annotate(str(annotate[1]) + "s",
-                    xy=(annotate[0], annotate[2]), xycoords='data', fontsize=10, horizontalalignment='center')
+        ax.annotate(str(annotate[1]),
+                    xy=(annotate[0], annotate[2]), xycoords='data', fontsize=8, horizontalalignment='center')
 
     ax.xaxis.set_major_formatter(format_func)
     f.autofmt_xdate(rotation=45)
