@@ -25,9 +25,10 @@ maxhr = 185
 spikes = 0.5
 
 [HEARTRATE_ZONES]
-#zones = [(148, "LT1", "green"),(162, "LT2", "red"),(None, "LT3","")]
+zones = [(148, "LT1", "green"),(162, "LT2", "red"),(None, "LT3","")]
 ## 5 zone model
-#zones = [(137, "Zone 1", "green"),(150, "Zone 2", "yellow"),(163, "Zone 3", "orange"),(174, "Zone 4", "red"),(None, "Zone 5","")]
+#zones = [(112, "Zone 1", "green"),(130, "Zone 2", "yellow"),(148, "Zone 3", "orange"),(167, "Zone 4", "red"),(None, "Zone 5","")]
+
 ```
 
 ## TO DO

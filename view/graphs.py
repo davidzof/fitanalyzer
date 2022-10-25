@@ -156,8 +156,8 @@ def plot_zones(df):
                     if zlen >= 120:
                         print("zone {}, zone length = {}".format(last_zone, zlen))
                         m, s = divmod(zlen, 60)
-                        t = '{:d}:{:02d}'.format(int(m),int(s))
-                        annotations.append((ts-(zlen/2), t, last_zone))
+                        t = '{:d}:{:02d}'.format(int(m), int(s))
+                        annotations.append((ts - (zlen / 2), t, last_zone))
                 start = ts
 
             print("zone {} ts {}".format(current_zone, ts))
@@ -172,11 +172,16 @@ def plot_zones(df):
     Plot zone values with different shadings for each zone
     see: https://stackoverflow.com/questions/69100231/matplotlib-fill-area-with-different-colors-based-on-a-value
     """
-    f, ax = plt.subplots(1)
+    f, axs = plt.subplots(2)
+
+    # plot the altitudes
+    axs[0].plot(df['timestamp'], df['altitude'], color='grey')
+    axs[0].set_title('Altitude')
+
 
     # plot the background zone chart
-    ax.plot(zone_time_stamps, zone_values, color='none')
-    plt.fill_between(zone_time_stamps, zone_values, color='red', alpha=(1/len(zones)))
+    axs[1].plot(zone_time_stamps, zone_values, color='none')
+    plt.fill_between(zone_time_stamps, zone_values, color='red', alpha=(1 / len(zones)))
     line = np.array(zone_values)
 
     ### TODO fix this we just need to loop over zones len, not zones
@@ -188,13 +193,12 @@ def plot_zones(df):
         """
         zone_graph = [zone_count] * len(zone_time_stamps)
         zone_graph_np = np.array(zone_graph)
-        alpha = ((zone_count)/len(zones))
-        ax.fill_between(zone_time_stamps, zone_values, where=line > zone_graph_np,
-                        facecolor='red', alpha=((zone_count)/len(zones)), interpolate=True)
+        alpha = ((zone_count) / len(zones))
+        axs[1].fill_between(zone_time_stamps, zone_values, where=line > zone_graph_np,
+                            facecolor='red', alpha=((zone_count) / len(zones)), interpolate=True)
         zone_count = zone_count + 1
 
-
-    ax.set_ylim(bottom=0)
+    axs[1].set_ylim(bottom=0)
     plt.legend()
     plt.xlabel('Time')
     plt.ylabel('Zones')
@@ -202,10 +206,10 @@ def plot_zones(df):
 
     for annotate in annotations:
         print(annotate)
-        ax.annotate(str(annotate[1]),
-                    xy=(annotate[0], annotate[2]), xycoords='data', fontsize=8, horizontalalignment='center')
+        axs[1].annotate(str(annotate[1]),
+                        xy=(annotate[0], annotate[2]), xycoords='data', fontsize=8, horizontalalignment='center')
 
-    ax.xaxis.set_major_formatter(format_func)
+    axs[1].xaxis.set_major_formatter(format_func)
     f.autofmt_xdate(rotation=45)
 
     plt.tight_layout()

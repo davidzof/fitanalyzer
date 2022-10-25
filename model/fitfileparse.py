@@ -39,44 +39,71 @@ def load_fitfile(filename):
 
     heartrate = []
     power = []
+    cadence = []
+    altitude = []
     time = []
     count = 0
     records = fit_file.get_messages("record")
     starttime = None
-    power = None
+    delta = None
     for record in records:
-        hr = None
+        hr = 0
+        pwr = 0
+        cad = 0
+        alt = 0
+        ctime = 0
+        speed = 1
         for data in record:
             # parse a fitfile record
 
             """
-            altitude: 185.0 [m]
             distance: 0.0 [m]
             cadence ???
-            heart_rate: 86 [bpm]
+
             temperature: 20 [C]
             timestamp: 2022-09-15 07:47:59
             """
+
+            if data.name == "speed":
+                speed = data.value
+                if data.value == 0 and delta is not None:
+                    print (delta.total_seconds())
             if data.name == "heart_rate":
                 hr = data.value
             if data.name == "timestamp":
-                if starttime == None:
-                    starttime = data.value
-                delta = data.value - starttime
-
+                ctime = data.value
             if data.name == "power":
-                power = data.value
+                pwr = data.value
 
-        if hr != None:
+            if data.name == "cadence":
+                cad = data.value
+
+            if data.name == "altitude":
+                alt = data.value
+
+        if speed > 0:
+            if starttime == None:
+                starttime = ctime
+            delta = ctime - starttime
+
+            # don't record when we are stopped
             heartrate.append(int(hr))
-            # power.append(int(pwr))
-            # time.append(datetime.timedelta(seconds=count))
+            power.append(int(pwr))
+            cadence.append(int(cad))
+            altitude.append(int(alt))
             time.append(delta.total_seconds())
+        else:
+            if delta is not None:
+                starttime = ctime - delta
+            else:
+                starttime = ctime
 
     df = pd.DataFrame()
     df['timestamp'] = time
     df['heartrate'] = heartrate
-    # df['power'] = power
+    df['power'] = power
+    df['cadence'] = cadence
+    df['altitude'] = altitude
 
     i = 0
     # Initialize an list to store moving averages
