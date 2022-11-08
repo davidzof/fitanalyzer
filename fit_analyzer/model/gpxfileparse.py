@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from fitparse import FitFile
 
-
 def medfilt(x, k):
     """Apply a length-k median filter to a 1D array x.
     Boundaries are extended by repeating endpoints.
@@ -39,71 +38,41 @@ def load_fitfile(filename):
 
     heartrate = []
     power = []
-    cadence = []
-    altitude = []
     time = []
     count = 0
     records = fit_file.get_messages("record")
-    starttime = None
-    delta = None
+    timestamp = None
+    power = None
     for record in records:
-        hr = 0
-        pwr = 0
-        cad = 0
-        alt = 0
-        ctime = 0
-        speed = 1
+        hr = None
         for data in record:
-            # parse a fitfile record
-
             """
-            distance: 0.0 [m]
-            cadence ???
-
-            temperature: 20 [C]
-            timestamp: 2022-09-15 07:47:59
-            """
-
-            if data.name == "speed":
-                speed = data.value
-                if data.value == 0 and delta is not None:
-                    print (delta.total_seconds())
+            altitude: 185.0 [m]
+distance: 0.0 [m]
+enhanced_altitude: 185.0 [m]
+heart_rate: 86 [bpm]
+temperature: 20 [C]
+timestamp: 2022-09-15 07:47:59
+"""
             if data.name == "heart_rate":
                 hr = data.value
             if data.name == "timestamp":
-                ctime = data.value
+                timestamp = data.value
+                pass
             if data.name == "power":
-                pwr = data.value
+                power = data.value
 
-            if data.name == "cadence":
-                cad = data.value
-
-            if data.name == "altitude":
-                alt = data.value
-
-        if speed > 0:
-            if starttime == None:
-                starttime = ctime
-            delta = ctime - starttime
-
-            # don't record when we are stopped
+        if hr != None:
             heartrate.append(int(hr))
-            power.append(int(pwr))
-            cadence.append(int(cad))
-            altitude.append(int(alt))
-            time.append(delta.total_seconds())
-        else:
-            if delta is not None:
-                starttime = ctime - delta
-            else:
-                starttime = ctime
+            #power.append(int(pwr))
+            # time.append(datetime.timedelta(seconds=count))
+            time.append(count)
+            count += 1
 
     df = pd.DataFrame()
     df['timestamp'] = time
     df['heartrate'] = heartrate
-    df['power'] = power
-    df['cadence'] = cadence
-    df['altitude'] = altitude
+    #df['power'] = power
 
     i = 0
     # Initialize an list to store moving averages

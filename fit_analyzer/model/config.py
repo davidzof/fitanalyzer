@@ -2,10 +2,10 @@ import configparser
 import logging
 from tkinter.messagebox import showinfo
 
-from model import analysis
-from model.fitfileparse import load_fitfile, load_hrv
+from fit_analyzer.model import analysis
+from fit_analyzer.model.fitfileparse import load_fitfile, load_hrv
 
-logger = logging.getLogger("client_manager")
+logger = logging.getLogger("configuration")
 logger.setLevel(logging.DEBUG)
 
 
@@ -29,11 +29,12 @@ class Configuration(Singleton):
         # Read Configuration
         config = configparser.ConfigParser()
         config.read('properties.ini')
-        print(config['DEFAULT']['MinHR'])
-        # config['DEFAULT']['MaxHR'] = '188'
+        self.min_hr = int(config['DEFAULT']['MinHR'])
+        self.max_hr = int(config['DEFAULT']['MaxHR'])
         self.zones = eval(config['HEARTRATE_ZONES']['zones'])
-        with open('properties.ini', 'w') as configfile:
-            config.write(configfile)
+
+        #with open('properties.ini', 'w') as configfile:
+        #    config.write(configfile)
 
     def setFileName(self, filename):
         self.filename = filename
@@ -41,6 +42,9 @@ class Configuration(Singleton):
 
     def getZones(self):
         return self.zones
+
+    def getMaxMinHR(self):
+        return self.max_hr, self.min_hr
 
     def getFileName(self):
         return self.filename
@@ -58,7 +62,7 @@ class Configuration(Singleton):
                 message="You need to load a FIT file first")
             return
         elif self.name_changed is True or self.dfr is None:
-            self.dfr = load_fitfile(self.filename)
+            self.dfr = load_fitfile(self.filename, self.max_hr, self.min_hr)
             self.name_changed = False
 
         return self.dfr

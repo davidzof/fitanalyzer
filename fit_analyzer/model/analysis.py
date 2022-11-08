@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from tkinter import *
 from tkinter.ttk import Progressbar
-from model import analysis
+from fit_analyzer.model import analysis
 
 
 def DFA1(pp_values, lower_scale_limit, upper_scale_limit):
@@ -21,6 +21,8 @@ def DFA1(pp_values, lower_scale_limit, upper_scale_limit):
     -------
 
     """
+
+
     scaleDensity = 30  # scales DFA is conducted between lower_scale_limit and upper_scale_limit
     m = 1  # order of polynomial fit (linear = 1, quadratic m = 2, cubic m = 3, etc...)
 

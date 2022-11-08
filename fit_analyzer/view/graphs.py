@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from model.config import Configuration
+from fit_analyzer.model.config import Configuration
 
 configuration = Configuration()
 
@@ -82,6 +82,7 @@ def plot_hr(df):
             plt.hlines(zone[0], 0, last, color=zone[2], linestyle='dashed', label=zone[1])
     plt.legend(loc='upper right')
     plt.grid()
+    plt.tight_layout()
     plt.show()
 
 
@@ -109,7 +110,95 @@ def plot_hrpwr(df):
     plt.show()
 
 
-def plot_zones(df):
+def tiz_sg(zone_values, zone_time_stamps):
+    """
+    Time in Zone / Session Goal model removes time spent in zones that were not relevant to the goal of teh session
+    Parameters
+    ----------
+    zone_values
+    zone_time_stamps
+
+    Returns
+    -------
+
+    """
+    for i in range(0, len(zone_values), 2):
+        if i > 0 and (i + 3) < len(zone_values):
+            # second zone
+            zlen = zone_time_stamps[i + 1] - zone_time_stamps[i]
+            zone = zone_values[i]
+
+            next_zone = zone_values[i + 2]
+            next_zlen = zone_time_stamps[i + 3] - zone_time_stamps[i + 2]
+
+            last_zone = zone_values[i - 1]
+            last_zlen = zone_time_stamps[i + 1] - zone_time_stamps[i - 2]
+
+            if zlen < 120:
+                """
+                What are the cases?
+                1. prev and next are > 120 and prev and next < zone and prev = next,
+                consolidate all three zones
+                2. prev and next are > 120 and next > zone and prev < zone
+                consolidate with next zone
+                3. prev and next are > 120 and next < zone and prev > zone
+                consolidate with previous
+
+                """
+                # print("zone {},{},{}, zone len {}".format(last_zone, zone, next_zone, zlen))
+
+                if last_zlen >= 120 and last_zone == next_zone and zone > 1:
+                    # 1 - remove short peaks and troughs
+                    zone_time_stamps[i + 2] = zone_time_stamps[i - 2]
+                    del zone_values[i + 1]
+                    del zone_values[i]
+                    del zone_values[i - 1]
+                    del zone_values[i - 2]
+                    del zone_time_stamps[i + 1]
+                    del zone_time_stamps[i]
+                    del zone_time_stamps[i - 1]
+                    del zone_time_stamps[i - 2]
+
+
+                elif next_zlen >= 120 and next_zone > zone and zone != 1:
+                    zone_time_stamps[i + 2] = zone_time_stamps[i]
+                    del zone_values[i + 1]
+                    del zone_values[i]
+                    del zone_time_stamps[i + 1]
+                    del zone_time_stamps[i]
+
+                    """
+                    elif next_zlen < 120 and next_zone < zone:
+                            zone_time_stamps[i + 1] = zone_time_stamps[i+3]
+                            del zone_values[i + 3]
+                            del zone_values[i + 2]
+                            del zone_time_stamps[i + 3]
+                            del zone_time_stamps[i + 2]
+                    """
+                else:
+                    continue
+                return tiz_sg(zone_values, zone_time_stamps)
+
+    return zone_values, zone_time_stamps
+
+
+def annotate(zone_values, zone_time_stamps):
+    ### Annotate zones longer than 2 minutes
+    annotations = []
+    last_ts = 0
+    for i in range(len(zone_values)):
+        zlen = zone_time_stamps[i] - last_ts
+        if zlen >= 120:
+            m, s = divmod(zlen, 60)
+            t = '{:d}:{:02d}'.format(int(m), int(s))
+            annotations.append((zone_time_stamps[i] - (zlen / 2), t, zone_values[i]))
+
+        last_ts = zone_time_stamps[i]
+
+    return annotations
+
+
+def plot_zones(df, sg_tiz=False):
     """
     Draws a graph of time spent in zones against elapsed time. Gives a vision of intervals and zones. Note only
     zones longer than 2 minutes (120s) get annotated with a timestamp
@@ -117,6 +206,7 @@ def plot_zones(df):
     Parameters
     ----------
     df - data fields to be plotted
+    sgtiz - if true we calculate zones using session goal/time in zone model.
 
     Returns
     -------
@@ -130,7 +220,6 @@ def plot_zones(df):
     i = 0
     zone_values = []
     zone_time_stamps = []
-    annotations = []
     while i < len(avehr):
         # Loop over all rolling average heart rate entries
         hr = avehr[i]
@@ -145,22 +234,10 @@ def plot_zones(df):
         if current_zone != last_zone:
             # the zone has changed
             if ts != 0:
-                # This is not the first change. Save the last zone end time (current time less 1 second)
+                # This is not the very first change. Save the last zone end time
                 zone_values.append(int(last_zone))
-                zone_time_stamps.append(ts - 1)
-                print("zone {} ts {}".format(last_zone, ts - 1))
-                if last_zone > 0:
-                    # annotate zones longer than 2 minutes with a timestamp
-                    zlen = ts - start
+                zone_time_stamps.append(ts)
 
-                    if zlen >= 120:
-                        print("zone {}, zone length = {}".format(last_zone, zlen))
-                        m, s = divmod(zlen, 60)
-                        t = '{:d}:{:02d}'.format(int(m), int(s))
-                        annotations.append((ts - (zlen / 2), t, last_zone))
-                start = ts
-
-            print("zone {} ts {}".format(current_zone, ts))
             zone_values.append(int(current_zone))
             zone_time_stamps.append(ts)
 
@@ -168,19 +245,29 @@ def plot_zones(df):
 
         i = i + 1
 
-    """
-    Plot zone values with different shadings for each zone
-    see: https://stackoverflow.com/questions/69100231/matplotlib-fill-area-with-different-colors-based-on-a-value
-    """
-    f, axs = plt.subplots(2)
+    if sg_tiz == True:
+        ### suppress short zones here for sg/tiz model
+        zone_values, zone_time_stamps = tiz_sg(zone_values, zone_time_stamps)
 
-    # plot the altitudes
-    axs[0].plot(df['timestamp'], df['altitude'], color='grey')
-    axs[0].set_title('Altitude')
+    ### Annotate zones longer than 2 minutes
+    annotations = annotate(zone_values, zone_time_stamps)
 
+    """
+      Plot zone values with different shadings for each zone
+      see: https://stackoverflow.com/questions/69100231/matplotlib-fill-area-with-different-colors-based-on-a-value
+    """
+    # plot the altitudes, if present
+    if 'altitude' in df:
+        f, axs = plt.subplots(2)
+        axs[0].plot(df['timestamp'], df['altitude'], color='grey')
+        axs[0].set_title('Altitude')
+        axs[0].grid()
+        zone_ax = axs[1]
+    else:
+        f, zone_ax = plt.subplots(1)
 
     # plot the background zone chart
-    axs[1].plot(zone_time_stamps, zone_values, color='none')
+    zone_ax.plot(zone_time_stamps, zone_values, color='none')
     plt.fill_between(zone_time_stamps, zone_values, color='red', alpha=(1 / len(zones)))
     line = np.array(zone_values)
 
@@ -194,22 +281,22 @@ def plot_zones(df):
         zone_graph = [zone_count] * len(zone_time_stamps)
         zone_graph_np = np.array(zone_graph)
         alpha = ((zone_count) / len(zones))
-        axs[1].fill_between(zone_time_stamps, zone_values, where=line > zone_graph_np,
-                            facecolor='red', alpha=((zone_count) / len(zones)), interpolate=True)
+        zone_ax.fill_between(zone_time_stamps, zone_values, where=line > zone_graph_np,
+                             facecolor='red', alpha=((zone_count) / len(zones)), interpolate=True)
         zone_count = zone_count + 1
 
-    axs[1].set_ylim(bottom=0)
+    zone_ax.set_ylim(bottom=0)
     plt.legend()
     plt.xlabel('Time')
     plt.ylabel('Zones')
     plt.title('HR Zones')
 
-    for annotate in annotations:
-        print(annotate)
-        axs[1].annotate(str(annotate[1]),
-                        xy=(annotate[0], annotate[2]), xycoords='data', fontsize=8, horizontalalignment='center')
+    for annotation in annotations:
+        print(annotation)
+        zone_ax.annotate(str(annotation[1]),
+                         xy=(annotation[0], annotation[2]), xycoords='data', fontsize=8, horizontalalignment='center')
 
-    axs[1].xaxis.set_major_formatter(format_func)
+    zone_ax.xaxis.set_major_formatter(format_func)
     f.autofmt_xdate(rotation=45)
 
     plt.tight_layout()

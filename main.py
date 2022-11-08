@@ -1,8 +1,6 @@
 from tkinter import *
 from tkinter.filedialog import askopenfilename
-
-from model.config import Configuration
-from view.graphs import *
+from fit_analyzer.view.graphs import *
 
 configuration = Configuration()
 
@@ -29,17 +27,31 @@ def select_file():
 
 
 def analyze_data():
+    """
+    We should create a graph class that has a plot method then subclass for every type of graph
+    We then have a list of graph types and call the relevant plot
+    Graphs would register their graphy type in an array
+
+    Returns
+    -------
+
+    """
     value = variable.get()
     if value == "Heart Rate":
         df = configuration.getFitData()
 
         if df is not None:
             plot_hr(df)
-    if value == "Zones":
+    if value == "Zones (TIZ)":
         df = configuration.getFitData()
 
         if df is not None:
             plot_zones(df)
+    if value == "Zones (SG/TIZ)":
+        df = configuration.getFitData()
+
+        if df is not None:
+            plot_zones(df, sg_tiz=True)
     if value == "Heart Rate + Power":
         df = configuration.getFitData()
         if df is not None:
@@ -64,7 +76,7 @@ def analyze_data():
         plt.plot(features_df['heartrate'], p(features_df['heartrate']), color="red", linewidth=2, linestyle="--")
 
         # Display the Trendline
-        #plt.plot(x, df['alpha1'])
+        # plt.plot(x, df['alpha1'])
 
         plt.grid()
         plt.show()
@@ -83,7 +95,8 @@ if __name__ == '__main__':
     OPTIONS = [
         "Heart Rate",
         "Heart Rate + Power",
-        "Zones",
+        "Zones (TIZ)",
+        "Zones (SG/TIZ)",
         "DFA Alpha1",
         "Heart Rate vs DFA Alpha1"
     ]  # etc
