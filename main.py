@@ -72,11 +72,12 @@ def analyze_data():
         z = np.polyfit(features_df['heartrate'], features_df['alpha1'], 1)
         p = np.poly1d(z)
 
+
         # Display the Trendline
         plt.plot(features_df['heartrate'], p(features_df['heartrate']), color="red", linewidth=2, linestyle="--")
 
-        # Display the Trendline
-        # plt.plot(x, df['alpha1'])
+        plt.hlines(0.75, 0, 180, color="green", linestyle='dashed', label="LT1")
+        plt.hlines(0.5, 0, 180, color="green", linestyle='dashed', label="LT2")
 
         plt.grid()
         plt.show()

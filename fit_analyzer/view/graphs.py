@@ -134,21 +134,13 @@ def tiz_sg(zone_values, zone_time_stamps):
             last_zone = zone_values[i - 1]
             last_zlen = zone_time_stamps[i + 1] - zone_time_stamps[i - 2]
 
-            if zlen < 120:
-                """
-                What are the cases?
-                1. prev and next are > 120 and prev and next < zone and prev = next,
-                consolidate all three zones
-                2. prev and next are > 120 and next > zone and prev < zone
-                consolidate with next zone
-                3. prev and next are > 120 and next < zone and prev > zone
-                consolidate with previous
+            if zlen < 60:
+                # current zone is less than 2 minutes
 
-                """
                 # print("zone {},{},{}, zone len {}".format(last_zone, zone, next_zone, zlen))
 
-                if last_zlen >= 120 and last_zone == next_zone and zone > 1:
-                    # 1 - remove short peaks and troughs
+                if last_zlen >= 60 and last_zone == next_zone and zone > 1:
+                    # 1 - remove short peaks and troughs and consolidate with surrounding zones
                     zone_time_stamps[i + 2] = zone_time_stamps[i - 2]
                     del zone_values[i + 1]
                     del zone_values[i]
@@ -159,22 +151,22 @@ def tiz_sg(zone_values, zone_time_stamps):
                     del zone_time_stamps[i - 1]
                     del zone_time_stamps[i - 2]
 
-
                 elif next_zlen >= 120 and next_zone > zone and zone != 1:
+                    # 2.left shoulder
                     zone_time_stamps[i + 2] = zone_time_stamps[i]
                     del zone_values[i + 1]
                     del zone_values[i]
                     del zone_time_stamps[i + 1]
                     del zone_time_stamps[i]
 
-                    """
-                    elif next_zlen < 120 and next_zone < zone:
-                            zone_time_stamps[i + 1] = zone_time_stamps[i+3]
-                            del zone_values[i + 3]
-                            del zone_values[i + 2]
-                            del zone_time_stamps[i + 3]
-                            del zone_time_stamps[i + 2]
-                    """
+                elif last_zlen >= 120 and last_zone > zone and zone != 1:
+                    # 3.right shoulder
+                    zone_time_stamps[i - 1] = zone_time_stamps[i+1]
+                    del zone_values[i + 1]
+                    del zone_values[i]
+                    del zone_time_stamps[i + 1]
+                    del zone_time_stamps[i]
+
                 else:
                     continue
                 return tiz_sg(zone_values, zone_time_stamps)
@@ -224,6 +216,7 @@ def plot_zones(df, sg_tiz=False):
         # Loop over all rolling average heart rate entries
         hr = avehr[i]
         ts = df['timestamp'][i]
+        print("{} : avehr {}".format(ts, hr))
         current_zone = 1
         for zone in zones:
             # calculate the current_zone based on the heart rate
@@ -245,6 +238,9 @@ def plot_zones(df, sg_tiz=False):
 
         i = i + 1
 
+    zone_values.append(int(current_zone))
+    zone_time_stamps.append(ts)
+
     if sg_tiz == True:
         ### suppress short zones here for sg/tiz model
         zone_values, zone_time_stamps = tiz_sg(zone_values, zone_time_stamps)
@@ -265,7 +261,7 @@ def plot_zones(df, sg_tiz=False):
         zone_ax = axs[1]
     else:
         f, zone_ax = plt.subplots(1)
-
+    f.canvas.set_window_title('SG/TIZ')
     # plot the background zone chart
     zone_ax.plot(zone_time_stamps, zone_values, color='none')
     plt.fill_between(zone_time_stamps, zone_values, color='red', alpha=(1 / len(zones)))
