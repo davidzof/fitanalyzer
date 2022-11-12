@@ -30,12 +30,27 @@ zones = [(148, "LT1", "green"),(162, "LT2", "red"),(None, "LT3","")]
 #zones = [(112, "Zone 1", "green"),(130, "Zone 2", "yellow"),(148, "Zone 3", "orange"),(167, "Zone 4", "red"),(None, "Zone 5","")]
 
 ```
+## DFA Alpha1
+This is supposed to predict Lactate 1 and 2 thresholds. In the image below LT1 occurs at DFA 0.75 and is 149bpm and LT2 at DFA 0.5 and is 162 bpm. This chart is from a 4 hour mixed ride: flats, long climbs, short climbs
+
+![DFA Alpha1](https://github.com/davidzof/fitanalyzer/blob/main/docs/dfa-alpha1.png)
+
+## Zones
+Fitanalyzer can show both Time in Zone (TIZ) and Session Goal / Time in Zone (SG/TIG). SG/TIZ cleans up very small intervals, say where you were aiming for a Zone3 Interval but had to slow down for lights and dropped briefly into Zone2. The 3 segments will be combined into a single Z3 segment. It gives a more realistic idea of the training session.
+
+TIZ
+
+![Time in Zone]((https://github.com/davidzof/fitanalyzer/blob/main/docs/4x8s.png)
+
+
+
 
 ## TO DO
-* Add altitude plot to HR screen
 * Make spike filter configurable
+* Make it easier to add new graph types: restructure code
+* Add actual time in each zone to zone graphs
 * Add gpx files
-* Add altitude graph as second plot
+* Add altitude graph as second plot - DONE
 * Add mapping?
 * Add altitude calculations to file
 * Save as GPX?
