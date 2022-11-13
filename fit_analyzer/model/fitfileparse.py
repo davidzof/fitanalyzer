@@ -157,7 +157,6 @@ def load_hrv(filename):
                     # todo: set this from configuration
                     # prefilter at max/min HR 40 / 200 bpm
                     if RR_interval < 1.5 and RR_interval > 0.3:
-                        print(RR_interval)
                         RRs.append(RR_interval)
                     else:
                         artifacts += 1

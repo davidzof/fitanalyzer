@@ -2,10 +2,12 @@
 Python GUI program for visualizing FIT data files
 
 ## Currently you can visualize
-1. Heart Rate data
-2. Heart Rate and Power data
-3. DFA Alpha 1 (Heart Rate Variablity)
-4. Heart Rate vs DFA Alpha 1 with trend line
+1. Heart Rate with lactate thresholds
+1. Heart Rate and Power data
+1. Time in Zone
+1. Session Goal / Time in Zone
+1. DFA Alpha 1 (Heart Rate Variablity)
+1. Heart Rate vs DFA Alpha 1 with trend line
 
 ## Properties file
 
@@ -31,18 +33,33 @@ zones = [(148, "LT1", "green"),(162, "LT2", "red"),(None, "LT3","")]
 
 ```
 ## DFA Alpha1
-This is supposed to predict Lactate 1 and 2 thresholds. In the image below LT1 occurs at DFA 0.75 and is 149bpm and LT2 at DFA 0.5 and is 162 bpm. This chart is from a 4 hour mixed ride: flats, long climbs, short climbs
+DFA (detrended fluctuation analysis) alpha 1 is an anaerobic threshold estimate based on
+heart rate variabiity. Basically the intervals between heart beats is not exactly constant
+it may be 600ms, 601ms, 599ms etc. A heart rate monitor would display this as 100 bpm. The
+amount this interval varies around the average increases as the heart is stressed. By
+analyzing this variation it is possible to estimate aerobic (LT1) and anaerobic (LT2) values
+ without doing blood tests. The method is still controversial. LT2 is similar to FTP, the
+ pace you can maintain for 1 hour.
+
+In the image below LT1 occurs at DFA 0.75 and is 149bpm and LT2 at DFA 0.5 and is 162 bpm.
+This chart is from a 4 hour mixed ride.
 
 ![DFA Alpha1](https://github.com/davidzof/fitanalyzer/blob/main/docs/dfa-alpha1.png)
 
+To get an accurate estimate good input data is essential. Bluetooth transmission gives cleaner
+data than ANT+. The data will have spikes and troughs removed in preprocessing and the artificact
+rate should be as low as possible (under 3% for accurate result)
+
 ## Zones
-Fitanalyzer can show both Time in Zone (TIZ) and Session Goal / Time in Zone (SG/TIG). SG/TIZ cleans up very small intervals, say where you were aiming for a Zone3 Interval but had to slow down for lights and dropped briefly into Zone2. The 3 segments will be combined into a single Z3 segment. It gives a more realistic idea of the training session.
+Fitanalyzer can show both Time in Zone (TIZ) and Session Goal / Time in Zone (SG/TIG).
 
-TIZ
+###TIZ
 
-![Time in Zone]((https://github.com/davidzof/fitanalyzer/blob/main/docs/4x8s.png)
+![Time in Zone](https://github.com/davidzof/fitanalyzer/blob/main/docs/4x8s.png)
 
+###SG/TIZ
 
+SG/TIZ cleans up very small intervals, say where you were aiming for a Zone3 Interval but had to slow down for lights and dropped briefly into Zone2. The 3 segments will be combined into a single Z3 segment. It gives a more realistic idea of the training session.
 
 
 ## TO DO

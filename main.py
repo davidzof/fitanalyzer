@@ -65,7 +65,8 @@ def analyze_data():
         plt.show()
     if value == "Heart Rate vs DFA Alpha1":
         features_df = configuration.getHRVData(master)
-        plt.scatter(features_df['heartrate'], features_df['alpha1'])
+
+        plt.scatter(features_df['heartrate'], features_df['alpha1'], s=5)
 
         # Calculate the Trendline
         features_df = features_df.dropna(subset=["alpha1"])
@@ -75,9 +76,10 @@ def analyze_data():
 
         # Display the Trendline
         plt.plot(features_df['heartrate'], p(features_df['heartrate']), color="red", linewidth=2, linestyle="--")
+        max_hr = features_df['heartrate'].max()
 
-        plt.hlines(0.75, 0, 180, color="green", linestyle='dashed', label="LT1")
-        plt.hlines(0.5, 0, 180, color="green", linestyle='dashed', label="LT2")
+        plt.hlines(0.75, 0, max_hr, color="orange", linestyle='dashed', label="LT1")
+        plt.hlines(0.5, 0, max_hr, color="orange", linestyle='dashed', label="LT2")
 
         plt.grid()
         plt.show()
