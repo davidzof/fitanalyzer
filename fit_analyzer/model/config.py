@@ -1,9 +1,12 @@
 import configparser
 import logging
+import pathlib
 from tkinter.messagebox import showinfo
 
 from fit_analyzer.model import analysis
-from fit_analyzer.model.fitfileparse import load_fitfile, load_hrv
+from fit_analyzer.model.fitparser import load_hrv, FitParser
+from fit_analyzer.model.gpxparser import GpxParser
+from fit_analyzer.model.tcxparser import TcxParser
 
 logger = logging.getLogger("configuration")
 logger.setLevel(logging.DEBUG)
@@ -21,6 +24,11 @@ class Singleton(object):
 class Configuration(Singleton):
     filename = None
     name_changed = False
+    gpsparsers = {
+        ".gpx": GpxParser(),
+        ".fit": FitParser(),
+        ".tcx": TcxParser()
+    }
 
     def __init__(self):
         self.hrv=None
@@ -49,7 +57,8 @@ class Configuration(Singleton):
     def getFileName(self):
         return self.filename
 
-    def getFitData(self):
+
+    def getData(self):
         """
 
         Returns
@@ -59,10 +68,13 @@ class Configuration(Singleton):
         if self.filename is None:
             showinfo(
                 title='Error',
-                message="You need to load a FIT file first")
+                message="You need to load a GPS file first")
             return
         elif self.name_changed is True or self.dfr is None:
-            self.dfr = load_fitfile(self.filename, self.max_hr, self.min_hr)
+            file_type = pathlib.Path(self.filename).suffix
+            parser = self.gpsparsers[file_type]
+            self.dfr = parser.load(self.filename, self.max_hr, self.min_hr)
+
             self.name_changed = False
 
         return self.dfr
@@ -74,7 +86,7 @@ class Configuration(Singleton):
         -------
 
         """
-        if self.filename is None:
+        if self.filename is None or not self.filename.endswith(".fit"):
             showinfo(
                 title='Error',
                 message="You need to load a FIT file first")

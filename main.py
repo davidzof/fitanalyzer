@@ -23,7 +23,7 @@ def sel(event):
 
 
 def select_file():
-    configuration.setFileName(askopenfilename(filetypes=[("Garmin fit files", "*.fit")]))
+    configuration.setFileName(askopenfilename(filetypes=[("FIT files", "*.fit"), ("GPX files", "*.gpx"), ("TCX files", "*.tcx")]))
 
 
 def analyze_data():
@@ -38,22 +38,27 @@ def analyze_data():
     """
     value = variable.get()
     if value == "Heart Rate":
-        df = configuration.getFitData()
+        df = configuration.getData()
 
         if df is not None:
             plot_hr(df)
     if value == "Zones (TIZ)":
-        df = configuration.getFitData()
+        df = configuration.getData()
 
         if df is not None:
             plot_zones(df)
     if value == "Zones (SG/TIZ)":
-        df = configuration.getFitData()
+        df = configuration.getData()
 
         if df is not None:
             plot_zones(df, sg_tiz=True)
+    if value == "Zones Percent":
+        df = configuration.getData()
+
+        if df is not None:
+            plot_zones_pie(df, sg_tiz=True)
     if value == "Heart Rate + Power":
-        df = configuration.getFitData()
+        df = configuration.getData()
         if df is not None:
             plot_hrpwr(df)
     if value == "DFA Alpha1":
@@ -100,6 +105,7 @@ if __name__ == '__main__':
         "Heart Rate + Power",
         "Zones (TIZ)",
         "Zones (SG/TIZ)",
+        "Zones Percent",
         "DFA Alpha1",
         "Heart Rate vs DFA Alpha1"
     ]  # etc
@@ -117,7 +123,7 @@ if __name__ == '__main__':
 
     open_button = Button(
         master,
-        text='Open a Fit File',
+        text='Open a GPS File',
         command=select_file
     )
     open_button.pack(expand=False)

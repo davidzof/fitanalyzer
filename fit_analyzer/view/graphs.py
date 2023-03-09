@@ -112,7 +112,7 @@ def plot_hrpwr(df):
 
 def tiz_sg(zone_values, zone_time_stamps):
     """
-    Time in Zone / Session Goal model removes time spent in zones that were not relevant to the goal of teh session
+    Time in Zone / Session Goal model removes time spent in zones that were not relevant to the goal of the session
     Parameters
     ----------
     zone_values
@@ -261,7 +261,7 @@ def plot_zones(df, sg_tiz=False):
         zone_ax = axs[1]
     else:
         f, zone_ax = plt.subplots(1)
-    f.canvas.set_window_title('SG/TIZ')
+    #f.canvas.set_window_title('SG/TIZ')
     # plot the background zone chart
     zone_ax.plot(zone_time_stamps, zone_values, color='none')
     plt.fill_between(zone_time_stamps, zone_values, color='red', alpha=(1 / len(zones)))
@@ -298,6 +298,67 @@ def plot_zones(df, sg_tiz=False):
     plt.tight_layout()
     plt.show()
 
+def plot_zones_pie(df, sg_tiz=False):
+    zones = configuration.getZones()
+
+    avehr = df['avehr']
+    last_zone = 0
+    start = 0
+    i = 0
+    zone_values = []
+    zone_time_stamps = []
+    while i < len(avehr):
+        # Loop over all rolling average heart rate entries
+        hr = avehr[i]
+        ts = df['timestamp'][i]
+        print("{} : avehr {}".format(ts, hr))
+        current_zone = 1
+        for zone in zones:
+            # calculate the current_zone based on the heart rate
+            if zone[0] is None or hr < zone[0]:
+                break
+            current_zone += 1
+
+        if current_zone != last_zone:
+            # the zone has changed
+            if ts != 0:
+                # This is not the very first change. Save the last zone end time
+                zone_values.append(int(last_zone))
+                zone_time_stamps.append(ts)
+
+            zone_values.append(int(current_zone))
+            zone_time_stamps.append(ts)
+
+            last_zone = current_zone
+
+        i = i + 1
+
+    zone_values.append(int(current_zone))
+    zone_time_stamps.append(ts)
+
+    if sg_tiz == True:
+        ### suppress short zones here for sg/tiz model
+        zone_values, zone_time_stamps = tiz_sg(zone_values, zone_time_stamps)
+
+
+    duration = zone_time_stamps[-1]
+    zone_percents = [0] * len(zones)
+    for i in range(0, len(zone_values), 2):
+        level = zone_values[i]
+        zone_percents[level-1] += ((zone_time_stamps[i+1] - zone_time_stamps[i])/duration)*100
+    print(zone_percents)
+
+    # Pie chart, where the slices will be ordered and plotted counter-clockwise:
+    # TODO this should use zones from config, not be hard coded
+    labels = 'Zone1', 'Zone2', 'Zone3'
+    explode = (0, 0, 0.1)  # explode the Zone3 slice
+
+    fig1, ax1 = plt.subplots()
+    ax1.pie(zone_percents, explode=explode, labels=labels, autopct='%1.1f%%',
+            shadow=True, startangle=90)
+    ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+    plt.show()
 
 def plot_multi(
         data: pd.DataFrame,
