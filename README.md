@@ -57,7 +57,7 @@ Fitanalyzer can show both Time in Zone (TIZ) and Session Goal / Time in Zone (SG
 
 ![Time in Zone](https://github.com/davidzof/fitanalyzer/blob/main/docs/4x8s.png)
 
-###SG/TIZ
+### SG/TIZ
 
 SG/TIZ cleans up very small intervals, say where you were aiming for a Zone3 Interval but had to slow down for lights and dropped briefly into Zone2. The 3 segments will be combined into a single Z3 segment. It gives a more realistic idea of the training session.
 
@@ -66,8 +66,8 @@ SG/TIZ cleans up very small intervals, say where you were aiming for a Zone3 Int
 * Make spike filter configurable
 * Make it easier to add new graph types: restructure code
 * Add actual time in each zone to zone graphs
-* Add gpx files
-* Add altitude graph as second plot - DONE
+* Add gpx file parsing [DONE]
+* Add altitude graph as second plot on SG graphs [DONE]
 * Add mapping?
-* Add altitude calculations to file
+* Add altitude calculations to file - how?
 * Save as GPX?
