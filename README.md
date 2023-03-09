@@ -53,7 +53,7 @@ rate should be as low as possible (under 3% for accurate result)
 ## Zones
 Fitanalyzer can show both Time in Zone (TIZ) and Session Goal / Time in Zone (SG/TIG).
 
-###TIZ
+### TIZ
 
 ![Time in Zone](https://github.com/davidzof/fitanalyzer/blob/main/docs/4x8s.png)
 
